@@ -1,10 +1,65 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
-      "type": "index-section"
+      "type": "index-section",
+      "settings": {}
+    },
+    "17666130046aa1ac0a": {
+      "type": "_blocks",
+      "blocks": {
+        "ai_gen_block_98beddc_z3AVwL": {
+          "type": "ai_gen_block_98beddc",
+          "settings": {
+            "menu": "main-menu",
+            "menu_title": "Menu",
+            "button_text": "",
+            "button_background": "#000000",
+            "button_hover_background": "#333333",
+            "button_text_color": "#ffffff",
+            "button_font_size": 16,
+            "button_font_weight": "500",
+            "button_padding_vertical": 12,
+            "button_padding_horizontal": 16,
+            "button_border_radius": 4,
+            "slide_direction": "left",
+            "panel_width": 320,
+            "panel_background": "#ffffff",
+            "panel_text_color": "#000000",
+            "divider_color": "#e5e5e5",
+            "panel_padding": 20,
+            "title_font_size": 20,
+            "title_font_weight": "600",
+            "link_font_size": 16,
+            "link_font_weight": "400",
+            "link_padding": 12,
+            "link_border_radius": 4,
+            "link_hover_background": "#f5f5f5",
+            "link_hover_color": "#000000",
+            "item_spacing": 4,
+            "dropdown_font_size": 14,
+            "dropdown_link_padding": 10,
+            "dropdown_indent": 16
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "ai_gen_block_98beddc_z3AVwL"
+      ],
+      "settings": {}
     }
   },
   "order": [
-    "main"
+    "main",
+    "17666130046aa1ac0a"
   ]
 }
