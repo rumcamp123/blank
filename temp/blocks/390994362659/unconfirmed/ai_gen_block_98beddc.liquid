@@ -1,6 +1,681 @@
+{% doc %}
+  @prompt
+    menu, make it a menu button that slides out
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-slide-menu-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+  }
+
+  .ai-slide-menu-button-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: {{ block.settings.button_padding_vertical }}px {{ block.settings.button_padding_horizontal }}px;
+    background-color: {{ block.settings.button_background }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-size: {{ block.settings.button_font_size }}px;
+    font-weight: {{ block.settings.button_font_weight }};
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-slide-menu-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_background }};
+  }
+
+  .ai-slide-menu-icon-{{ ai_gen_id }} {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-slide-menu-icon-{{ ai_gen_id }} span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .ai-slide-menu-button-{{ ai_gen_id }}.active .ai-slide-menu-icon-{{ ai_gen_id }} span:nth-child(1) {
+    transform: translateY(11px) rotate(45deg);
+  }
+
+  .ai-slide-menu-button-{{ ai_gen_id }}.active .ai-slide-menu-icon-{{ ai_gen_id }} span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .ai-slide-menu-button-{{ ai_gen_id }}.active .ai-slide-menu-icon-{{ ai_gen_id }} span:nth-child(3) {
+    transform: translateY(-11px) rotate(-45deg);
+  }
+
+  .ai-slide-menu-overlay-{{ ai_gen_id }} {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 999;
+  }
+
+  .ai-slide-menu-overlay-{{ ai_gen_id }}.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .ai-slide-menu-panel-{{ ai_gen_id }} {
+    position: fixed;
+    top: 0;
+    {{ block.settings.slide_direction }}: 0;
+    width: {{ block.settings.panel_width }}px;
+    max-width: 90%;
+    height: 100%;
+    background-color: {{ block.settings.panel_background }};
+    box-shadow: {% if block.settings.slide_direction == 'left' %}2px 0 12px{% else %}-2px 0 12px{% endif %} rgba(0, 0, 0, 0.15);
+    transform: translateX({% if block.settings.slide_direction == 'left' %}-100%{% else %}100%{% endif %});
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+  }
+
+  .ai-slide-menu-panel-{{ ai_gen_id }}.active {
+    transform: translateX(0);
+  }
+
+  .ai-slide-menu-header-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: {{ block.settings.panel_padding }}px;
+    border-bottom: 1px solid {{ block.settings.divider_color }};
+  }
+
+  .ai-slide-menu-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_font_size }}px;
+    font-weight: {{ block.settings.title_font_weight }};
+    color: {{ block.settings.panel_text_color }};
+    margin: 0;
+  }
+
+  .ai-slide-menu-close-{{ ai_gen_id }} {
+    background: none;
+    border: none;
+    color: {{ block.settings.panel_text_color }};
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+  }
+
+  .ai-slide-menu-close-{{ ai_gen_id }}:hover {
+    opacity: 0.7;
+  }
+
+  .ai-slide-menu-nav-{{ ai_gen_id }} {
+    padding: {{ block.settings.panel_padding }}px;
+  }
+
+  .ai-slide-menu-item-{{ ai_gen_id }} {
+    margin-bottom: {{ block.settings.item_spacing }}px;
+  }
+
+  .ai-slide-menu-link-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: {{ block.settings.link_padding }}px;
+    color: {{ block.settings.panel_text_color }};
+    text-decoration: none;
+    font-size: {{ block.settings.link_font_size }}px;
+    font-weight: {{ block.settings.link_font_weight }};
+    border-radius: {{ block.settings.link_border_radius }}px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .ai-slide-menu-link-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.link_hover_background }};
+    color: {{ block.settings.link_hover_color }};
+  }
+
+  .ai-slide-menu-dropdown-toggle-{{ ai_gen_id }} {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-slide-menu-dropdown-toggle-{{ ai_gen_id }} svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ai-slide-menu-item-{{ ai_gen_id }}.active .ai-slide-menu-dropdown-toggle-{{ ai_gen_id }} {
+    transform: rotate(180deg);
+  }
+
+  .ai-slide-menu-dropdown-{{ ai_gen_id }} {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-left: {{ block.settings.dropdown_indent }}px;
+  }
+
+  .ai-slide-menu-item-{{ ai_gen_id }}.active .ai-slide-menu-dropdown-{{ ai_gen_id }} {
+    max-height: 500px;
+  }
+
+  .ai-slide-menu-dropdown-link-{{ ai_gen_id }} {
+    display: block;
+    padding: {{ block.settings.dropdown_link_padding }}px;
+    color: {{ block.settings.panel_text_color }};
+    text-decoration: none;
+    font-size: {{ block.settings.dropdown_font_size }}px;
+    border-radius: {{ block.settings.link_border_radius }}px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    opacity: 0.8;
+  }
+
+  .ai-slide-menu-dropdown-link-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.link_hover_background }};
+    color: {{ block.settings.link_hover_color }};
+    opacity: 1;
+  }
+{% endstyle %}
+
+<ai-slide-menu-{{ ai_gen_id }} class="ai-slide-menu-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <button class="ai-slide-menu-button-{{ ai_gen_id }}" aria-label="Open menu" aria-expanded="false">
+    <div class="ai-slide-menu-icon-{{ ai_gen_id }}">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    {% if block.settings.button_text != blank %}
+      <span>{{ block.settings.button_text }}</span>
+    {% endif %}
+  </button>
+
+  <div class="ai-slide-menu-overlay-{{ ai_gen_id }}" aria-hidden="true"></div>
+
+  <div class="ai-slide-menu-panel-{{ ai_gen_id }}" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="ai-slide-menu-header-{{ ai_gen_id }}">
+      {% if block.settings.menu_title != blank %}
+        <h2 class="ai-slide-menu-title-{{ ai_gen_id }}">{{ block.settings.menu_title }}</h2>
+      {% endif %}
+      <button class="ai-slide-menu-close-{{ ai_gen_id }}" aria-label="Close menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="ai-slide-menu-nav-{{ ai_gen_id }}">
+      {% if block.settings.menu != blank %}
+        {% for link in block.settings.menu.links %}
+          <div class="ai-slide-menu-item-{{ ai_gen_id }} {% if link.links.size > 0 %}has-dropdown{% endif %}">
+            {% if link.links.size > 0 %}
+              <a href="{{ link.url }}" class="ai-slide-menu-link-{{ ai_gen_id }}">
+                <span>{{ link.title }}</span>
+                <div class="ai-slide-menu-dropdown-toggle-{{ ai_gen_id }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+              </a>
+              <div class="ai-slide-menu-dropdown-{{ ai_gen_id }}">
+                {% for child_link in link.links %}
+                  <a href="{{ child_link.url }}" class="ai-slide-menu-dropdown-link-{{ ai_gen_id }}">
+                    {{ child_link.title }}
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <a href="{{ link.url }}" class="ai-slide-menu-link-{{ ai_gen_id }}">
+                <span>{{ link.title }}</span>
+              </a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="ai-slide-menu-item-{{ ai_gen_id }}">
+          <a href="#" class="ai-slide-menu-link-{{ ai_gen_id }}">
+            <span>Home</span>
+          </a>
+        </div>
+        <div class="ai-slide-menu-item-{{ ai_gen_id }} has-dropdown">
+          <a href="#" class="ai-slide-menu-link-{{ ai_gen_id }}">
+            <span>Shop</span>
+            <div class="ai-slide-menu-dropdown-toggle-{{ ai_gen_id }}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </a>
+          <div class="ai-slide-menu-dropdown-{{ ai_gen_id }}">
+            <a href="#" class="ai-slide-menu-dropdown-link-{{ ai_gen_id }}">All Products</a>
+            <a href="#" class="ai-slide-menu-dropdown-link-{{ ai_gen_id }}">New Arrivals</a>
+            <a href="#" class="ai-slide-menu-dropdown-link-{{ ai_gen_id }}">Sale</a>
+          </div>
+        </div>
+        <div class="ai-slide-menu-item-{{ ai_gen_id }}">
+          <a href="#" class="ai-slide-menu-link-{{ ai_gen_id }}">
+            <span>About</span>
+          </a>
+        </div>
+        <div class="ai-slide-menu-item-{{ ai_gen_id }}">
+          <a href="#" class="ai-slide-menu-link-{{ ai_gen_id }}">
+            <span>Contact</span>
+          </a>
+        </div>
+      {% endif %}
+    </nav>
+  </div>
+</ai-slide-menu-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class AiSlideMenu{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.button = null;
+        this.overlay = null;
+        this.panel = null;
+        this.closeButton = null;
+        this.dropdownItems = [];
+      }
+
+      connectedCallback() {
+        this.button = this.querySelector('.ai-slide-menu-button-{{ ai_gen_id }}');
+        this.overlay = this.querySelector('.ai-slide-menu-overlay-{{ ai_gen_id }}');
+        this.panel = this.querySelector('.ai-slide-menu-panel-{{ ai_gen_id }}');
+        this.closeButton = this.querySelector('.ai-slide-menu-close-{{ ai_gen_id }}');
+        this.dropdownItems = this.querySelectorAll('.ai-slide-menu-item-{{ ai_gen_id }}.has-dropdown');
+
+        this.setupEventListeners();
+      }
+
+      setupEventListeners() {
+        this.button.addEventListener('click', () => this.openMenu());
+        this.closeButton.addEventListener('click', () => this.closeMenu());
+        this.overlay.addEventListener('click', () => this.closeMenu());
+
+        this.dropdownItems.forEach(item => {
+          const link = item.querySelector('.ai-slide-menu-link-{{ ai_gen_id }}');
+          const toggle = item.querySelector('.ai-slide-menu-dropdown-toggle-{{ ai_gen_id }}');
+          
+          if (toggle) {
+            toggle.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              item.classList.toggle('active');
+            });
+          }
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && this.panel.classList.contains('active')) {
+            this.closeMenu();
+          }
+        });
+      }
+
+      openMenu() {
+        this.button.classList.add('active');
+        this.overlay.classList.add('active');
+        this.panel.classList.add('active');
+        this.button.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+
+      closeMenu() {
+        this.button.classList.remove('active');
+        this.overlay.classList.remove('active');
+        this.panel.classList.remove('active');
+        this.button.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+    }
+
+    customElements.define('ai-slide-menu-{{ ai_gen_id }}', AiSlideMenu{{ ai_gen_id }});
+  })();
+</script>
+
 {% schema %}
- {
-   "name": "AI_Block",
-   "tag": "shopify-ai-generated-block"
- }
+{
+  "name": "Slide out menu",
+  "tag": null,
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "menu_title",
+      "label": "Menu title",
+      "default": "Menu"
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "button_text",
+      "label": "Button text"
+    },
+    {
+      "type": "color",
+      "id": "button_background",
+      "label": "Background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_background",
+      "label": "Hover background",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "label": "Font size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "button_font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "500"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_vertical",
+      "label": "Vertical padding",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Panel"
+    },
+    {
+      "type": "select",
+      "id": "slide_direction",
+      "label": "Slide direction",
+      "options": [
+        {
+          "value": "left",
+          "label": "From left"
+        },
+        {
+          "value": "right",
+          "label": "From right"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "panel_width",
+      "label": "Width",
+      "min": 250,
+      "max": 500,
+      "step": 10,
+      "unit": "px",
+      "default": 320
+    },
+    {
+      "type": "color",
+      "id": "panel_background",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "panel_text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Divider color",
+      "default": "#e5e5e5"
+    },
+    {
+      "type": "range",
+      "id": "panel_padding",
+      "label": "Padding",
+      "min": 16,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Title"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "label": "Font size",
+      "min": 16,
+      "max": 28,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "select",
+      "id": "title_font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "header",
+      "content": "Menu links"
+    },
+    {
+      "type": "range",
+      "id": "link_font_size",
+      "label": "Font size",
+      "min": 14,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "link_font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi bold"
+        }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "range",
+      "id": "link_padding",
+      "label": "Padding",
+      "min": 8,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "link_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 12,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "color",
+      "id": "link_hover_background",
+      "label": "Hover background",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "color",
+      "id": "link_hover_color",
+      "label": "Hover text color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "item_spacing",
+      "label": "Item spacing",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Dropdown"
+    },
+    {
+      "type": "range",
+      "id": "dropdown_font_size",
+      "label": "Font size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "dropdown_link_padding",
+      "label": "Link padding",
+      "min": 6,
+      "max": 16,
+      "step": 2,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "dropdown_indent",
+      "label": "Indent",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Slide out menu"
+    }
+  ]
+}
 {% endschema %}
